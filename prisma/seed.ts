@@ -1,69 +1,141 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 async function main() {
-	console.log("🌱 Seeding database...");
+	console.log("🌱 Seeding the database...");
 
-	// Seed Categories
-	const categories = await prisma.category.createMany({
+	// Create authors
+	const authors = await prisma.author.createMany({
 		data: [
-			{ name: "Science Fiction" },
-			{ name: "Mystery" },
-			{ name: "Fantasy" },
-			{ name: "Non-Fiction" },
+			{
+				id: "author1",
+				name: "Robert C. Martin",
+				bio: "Author of Clean Code",
+			},
+			{
+				id: "author2",
+				name: "Fred Brooks",
+				bio: "Author of The Mythical Man-Month",
+			},
+			{
+				id: "author3",
+				name: "Andrew Hunt",
+				bio: "Author of The Pragmatic Programmer",
+			},
+			{
+				id: "author4",
+				name: "Martin Kleppmann",
+				bio: "Author of Designing Data-Intensive Applications",
+			},
+			{
+				id: "author5",
+				name: "Thomas H. Cormen",
+				bio: "Author of Introduction to Algorithms",
+			},
 		],
 	});
 
-	console.log(`✅ Added ${categories.count} categories`);
+	console.log("✅ Authors seeded!");
 
-	// Seed Authors
-	const author1 = await prisma.author.create({
-		data: {
-			name: "Frank Herbert",
-			bio: "Author of Dune and other science fiction novels.",
-		},
+	// Create categories
+	const category = await prisma.category.upsert({
+		where: { name: "Software Engineering" },
+		update: {},
+		create: { id: "category1", name: "Software Engineering" },
 	});
 
-	console.log(`✅ Added author: ${author1.name}`);
+	console.log("✅ Category seeded!");
 
-	// Find category ID
-	const category = await prisma.category.findFirst({
-		where: { name: "Science Fiction" },
-	});
-
-	if (!category) {
-		throw new Error("❌ Category not found!");
-	}
-
-	// Seed Books
-	const book1 = await prisma.book.create({
-		data: {
-			title: "Dune",
-			description: "A classic science fiction novel about a desert planet.",
-			price: 19.99,
-			isbn: "9780441013593",
-			available: true,
-			website: "https://example.com/dune",
-			publishedAt: new Date("1965-08-01"),
-			categoryId: category.id,
-			authorId: author1.id,
-			coverImage: {
-				create: { url: "https://example.com/dune.jpg" },
+	// Create books
+	const books = await prisma.book.createMany({
+		data: [
+			{
+				id: "book1",
+				title: "Clean Code",
+				description: "A Handbook of Agile Software Craftsmanship",
+				price: 29.99,
+				isbn: "9780132350884",
+				available: true,
+				authorId: "author1",
+				categoryId: "category1",
 			},
-		},
+			{
+				id: "book2",
+				title: "The Mythical Man-Month",
+				description: "Essays on Software Engineering",
+				price: 24.99,
+				isbn: "9780201835953",
+				available: true,
+				authorId: "author2",
+				categoryId: "category1",
+			},
+			{
+				id: "book3",
+				title: "The Pragmatic Programmer",
+				description: "Your Journey to Mastery",
+				price: 35.99,
+				isbn: "9780135957059",
+				available: true,
+				authorId: "author3",
+				categoryId: "category1",
+			},
+			{
+				id: "book4",
+				title: "Designing Data-Intensive Applications",
+				description:
+					"The Big Ideas Behind Reliable, Scalable, and Maintainable Systems",
+				price: 39.99,
+				isbn: "9781449373320",
+				available: true,
+				authorId: "author4",
+				categoryId: "category1",
+			},
+			{
+				id: "book5",
+				title: "Introduction to Algorithms",
+				description: "A comprehensive introduction to algorithms",
+				price: 89.99,
+				isbn: "9780262033848",
+				available: true,
+				authorId: "author5",
+				categoryId: "category1",
+			},
+		],
 	});
 
-	console.log(`✅ Added book: ${book1.title}`);
+	console.log("✅ Books seeded!");
 
-	console.log("🌱 Seeding completed!");
+	// Create cover images
+	const images = await prisma.image.createMany({
+		data: [
+			{
+				url: "https://m.media-amazon.com/images/I/51E2055ZGUL._SL1000_.jpg",
+				bookId: "book1",
+			},
+			{
+				url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1348430512i/13629.jpg",
+				bookId: "book2",
+			},
+			{
+				url: "https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/tpp20.jpg",
+				bookId: "book3",
+			},
+			{
+				url: "https://m.media-amazon.com/images/I/91YfNb49PLL._SL1500_.jpg",
+				bookId: "book4",
+			},
+			{
+				url: "https://5.imimg.com/data5/IOS/Default/2024/2/390540651/XP/LF/RK/112007100/product-jpeg.png",
+				bookId: "book5",
+			},
+		],
+	});
+
+	console.log("✅ Cover images seeded!");
+
+	console.log("🎉 Seeding complete!");
 }
-
 main()
-	.catch((e) => {
-		console.error(e);
-		process.exit(1);
-	})
+	.catch((e) => console.error(e))
 	.finally(async () => {
 		await prisma.$disconnect();
 	});

@@ -9,17 +9,17 @@ datasource db {
 
 // Author (One-to-Many: An author can have multiple books)
 model Author {
-  id    String  @id @default(uuid()) 
-  name  String
+  id    String  @id @default(uuid())
+  name  String  @unique
   bio   String?
   books Book[] // One-to-Many: One author has many books
 }
 
 // Category (One-to-Many: A category can have multiple books)
 model Category {
-  id    String  @id @default(uuid()) 
-  name  String  @unique
-  books Book[]  // One-to-Many: One category has many books
+  id    String @id @default(uuid())
+  name  String @unique
+  books Book[] // One-to-Many: One category has many books
 }
 
 // Book (Stores all input fields)
@@ -34,15 +34,15 @@ model Book {
   publishedAt DateTime @default(now())
 
   // One-to-Many: A book belongs to one author
-  authorId    String
-  author      Author   @relation(fields: [authorId], references: [id])
+  authorId String
+  author   Author @relation(fields: [authorId], references: [id])
 
   // One-to-Many: A book belongs to one category
-  categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id])
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
 
   // One-to-One: A book has one cover image
-  coverImage  Image?
+  coverImage Image?
 
   // Reviews (Optional: Remove if not needed)
   reviews Review[]
@@ -50,16 +50,18 @@ model Book {
 
 // Image (One-to-One: A book has one cover image)
 model Image {
-  id      String @id @default(uuid())
-  url     String
-  book    Book   @relation(fields: [id], references: [id])
+  id     String @id @default(uuid())
+  url    String
+  bookId String @unique
+  book   Book   @relation(fields: [bookId], references: [id])
 }
 
 // Review (One-to-Many: A book has multiple reviews)
 model Review {
-  id      String  @id @default(uuid())
-  content String
-  rating  Int
-  bookId  String
-  book    Book    @relation(fields: [bookId], references: [id])
+  id        String   @id @default(uuid())
+  content   String
+  rating    Int
+  bookId    String
+  book      Book     @relation(fields: [bookId], references: [id])
+  createdAt DateTime @default(now())
 }
