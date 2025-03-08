@@ -1,3 +1,4 @@
+import AddBookForm from "@/components/AddBookForm";
 import BooksList from "@/components/BooksList";
 
 export default async function Home() {
@@ -28,7 +29,7 @@ export default async function Home() {
       <div className="w-1/3">
         <div className="bg-white shadow-md rounded-lg p-4">
           <h2 className="text-xl font-bold mb-4">Add New Book</h2>
-          <p>Form implementation goes here...</p>
+          <AddBookForm />
         </div>
       </div>
 

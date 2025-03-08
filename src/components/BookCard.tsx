@@ -30,7 +30,7 @@ const BookCard: React.FC<BookCardProps> = ({ book }) => {
       <div className="bg-white shadow-md rounded-lg p-4 flex flex-col gap-2">
          <div className="relative w-full h-48">
             <Image
-               src={book.coverImage?.url || "/placeholder.jpg"}
+               src={book.coverImage?.url || '/book-placeholder.png'}
                alt={book.title}
                layout="fill"
                objectFit="cover"

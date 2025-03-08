@@ -24,3 +24,16 @@ export interface Book {
 		url: string;
 	};
 }
+
+export interface FormState {
+	id: string;
+	title: string;
+	description: string;
+	price: number | "";
+	isbn: string;
+	available: boolean;
+	website: string;
+	authorName: string;
+	categoryName: string;
+	coverUrl: string;
+}

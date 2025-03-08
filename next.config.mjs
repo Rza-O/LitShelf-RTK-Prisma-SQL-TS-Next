@@ -18,6 +18,10 @@ const nextConfig = {
             protocol: 'https',
             hostname: '5.imimg.com',
          },
+         {
+            protocol: 'https',
+            hostname: 'encrypted-tbn0.gstatic.com',
+         },
       ],
    },
 };

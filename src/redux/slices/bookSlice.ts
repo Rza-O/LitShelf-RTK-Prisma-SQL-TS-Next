@@ -38,21 +38,20 @@ export const fetchBooks = createAsyncThunk(
 
 // add books(optimistic ui)
 export const addBookAsync = createAsyncThunk(
-	"books/addBookAsync",
-	async (book: Book, { rejectWithValue }) => {
+	"book/addBookAsync",
+	async (bookData: Partial<Book>, { rejectWithValue }) => {
 		try {
-			const { data } = await axios.post<Book>(
-				`${process.env.NEXT_PUBLIC_API_URL}/api/books`
-			);
-			return data;
+			const response = await axios.post("/api/books", bookData, {
+				headers: {
+					"Content-Type": "application/json", // Ensure JSON content type
+				},
+			});
+			return response.data;
 		} catch (error) {
-			if (axios.isAxiosError(error)) {
-				return rejectWithValue(
-					error.response?.data || "An unexpected error occurred"
-				);
-			} else {
-				return rejectWithValue("Unknown error occurred");
+			if (axios.isAxiosError(error) && error.response) {
+				return rejectWithValue(error.response.data);
 			}
+			return rejectWithValue("Failed to add book");
 		}
 	}
 );
@@ -143,7 +142,20 @@ const bookSlice = createSlice({
 
 			// Add books
 			.addCase(addBookAsync.pending, (state, action) => {
-				const tempBook = { ...action.meta.arg, id: crypto.randomUUID() };
+				const tempBook: Book = {
+					...action.meta.arg,
+					id: crypto.randomUUID(),
+					title: action.meta.arg.title || "",
+					description: action.meta.arg.description || "",
+					price: action.meta.arg.price || 0,
+					isbn: action.meta.arg.isbn || "",
+					available: action.meta.arg.available || false,
+					website: action.meta.arg.website || "",
+					publishedAt: action.meta.arg.publishedAt || "",
+					author: action.meta.arg.author || { id: "", name: "" },
+					category: action.meta.arg.category || { id: "", name: "" },
+					coverImage: action.meta.arg.coverImage || { id: "", url: "" }
+				};
 				state.books.unshift(tempBook);
 			})
 			.addCase(addBookAsync.rejected, (state, action) => {
