@@ -31,17 +31,29 @@ export const POST = async (req: Request) => {
 			price,
 			isbn,
 			available,
-			authorId,
-			categoryId,
+			authorName,
+			categoryName,
 			coverUrl,
 		} = body;
 
-		if (!title || !authorId || !categoryId) {
+		if (!title || !authorName || !categoryName) {
 			return NextResponse.json(
 				{ error: "Missing Required Fields" },
 				{ status: 400 }
 			);
 		}
+
+		const author = await prisma.author.upsert({
+			where: { name: authorName },
+			update: {},
+			create: { name: authorName },
+		});
+
+		const category = await prisma.category.upsert({
+			where: { name: categoryName },
+			update: {},
+			create: { name: categoryName },
+		});
 
 		const newBook = await prisma.book.create({
 			data: {
@@ -50,8 +62,8 @@ export const POST = async (req: Request) => {
 				price,
 				isbn,
 				available,
-				authorId,
-				categoryId,
+				authorId: author.id,
+				categoryId: category.id,
 				coverImage: coverUrl ? { create: { url: coverUrl } } : undefined,
 			},
 			include: { author: true, category: true, coverImage: true },
