@@ -1,8 +1,26 @@
 export interface Book {
 	id: string;
 	title: string;
-	author: string;
-	isbn: string;
+	description: string;
 	price: number;
-	coverImage: string;
+	isbn: string;
+	available: boolean;
+	website?: string;
+	publishedAt: string;
+
+	author: {
+		id: string;
+		name: string;
+		bio?: string;
+	};
+
+	category: {
+		id: string;
+		name: string;
+	};
+
+	coverImage?: {
+		id: string;
+		url: string;
+	};
 }
