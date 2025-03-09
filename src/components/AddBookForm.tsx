@@ -1,126 +1,141 @@
 "use client";
 
-import { FormState } from "@/app/types";
+import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/redux/store";
 import { addBookAsync } from "@/redux/slices/bookSlice";
-import { resetForm, updateField } from "@/redux/slices/formSlice";
-import { RootState, store } from "@/redux/store";
-import { ChangeEvent, FormEvent } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { Book } from "@/app/types";
 
-const AddBookForm = () => {
-   const dispatch = useDispatch<typeof store.dispatch>();
-   const formData = useSelector((state: RootState) => state.form);
+const BookForm = () => {
+   const dispatch = useDispatch<AppDispatch>();
 
-   const handleChange = (
-      e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-   ) => {
+   // Form State
+   const [formData, setFormData] = useState<Omit<Book, "id"> & {
+      description: string;
+      categoryName: string;
+   }>({
+      title: "",
+      author: "",
+      isbn: "",
+      price: 0,
+      coverImage: "",
+      description: "",
+      categoryName: "",
+   });
+
+   const [errors, setErrors] = useState<string[]>([]);
+
+   // Handle Input Change
+   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const { name, value } = e.target;
-
-      // Convert `price` to number if the field is `price`
-      const fieldValue = name === "price" ? Number(value) || 0 : value;
-
-      dispatch(updateField({ field: name as keyof FormState, value: fieldValue }));
+      setFormData((prevData) => ({
+         ...prevData,
+         [name]: name === "price" ? Number(value) || "" : value,
+      }));
    };
 
-   const handleSubmit = async (e: FormEvent) => {
+   // Handle Form Submission
+   const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
 
-      const bookData = {
-         title: formData.title,
-         description: formData.description,
-         price: Number(formData.price), // Ensure price is a number
-         isbn: formData.isbn,
-         website: formData.website,
-         author: { id: crypto.randomUUID(), name: formData.authorName },
-         category: { id: crypto.randomUUID(), name: formData.categoryName },
-         coverUrl: formData.coverUrl,
-         publishedAt: new Date().toISOString(),
-      };
+      // Basic Validation
+      const missingFields = Object.entries(formData)
+         .filter(([key, value]) => key !== "coverImage" && !value)
+         .map(([key]) => key);
 
-      console.log("Sending bookData:", bookData); // ✅ Add this for debugging
-
-      try {
-         await dispatch(addBookAsync(bookData)).unwrap();
-         dispatch(resetForm()); // Clear the form after success
-      } catch (error) {
-         console.error("Error adding book:", error);
+      if (missingFields.length) {
+         setErrors(missingFields);
+         return;
       }
+
+      // Dispatch Async Action
+      const newBook: Book = { ...formData, id: Date.now().toString() };
+      dispatch(addBookAsync(newBook));
+
+      // Clear Form
+      setFormData({
+         title: "",
+         author: "",
+         isbn: "",
+         price: 0,
+         coverImage: "",
+         description: "",
+         categoryName: "",
+      });
+      setErrors([]);
    };
 
+   // Utility: Highlight missing fields
+   const isError = (field: keyof typeof formData) => errors.includes(field);
 
    return (
-      <form onSubmit={handleSubmit} className="space-y-4 p-4 border border-gray-300 rounded-md">
-         <input
-            type="text"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            placeholder="Title"
-            className="w-full p-2 border rounded"
-            required
-         />
-         <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            placeholder="Description"
-            className="w-full p-2 border rounded"
-            required
-         />
-         <input
-            type="number"
-            name="price"
-            value={formData.price}
-            onChange={handleChange}
-            placeholder="Price"
-            className="w-full p-2 border rounded"
-            required
-         />
-         <input
-            type="text"
-            name="isbn"
-            value={formData.isbn}
-            onChange={handleChange}
-            placeholder="ISBN"
-            className="w-full p-2 border rounded"
-            required
-         />
-         <input
-            type="text"
-            name="authorName"
-            value={formData.authorName}
-            onChange={handleChange}
-            placeholder="Author Name"
-            className="w-full p-2 border rounded"
-            required
-         />
-         <input
-            type="text"
-            name="categoryName"
-            value={formData.categoryName}
-            onChange={handleChange}
-            placeholder="Category Name"
-            className="w-full p-2 border rounded"
-            required
-         />
-         <input
-            type="url"
-            name="coverUrl"
-            value={formData.coverUrl}
-            onChange={handleChange}
-            placeholder="Cover Image URL"
-            className="w-full p-2 border rounded"
-            required
-         />
+      <div className="max-w-md p-6 bg-white rounded-2xl shadow-md space-y-4">
+         <h2 className="text-xl font-bold text-gray-800">Add a New Book</h2>
 
-         <button
-            type="submit"
-            className="w-full p-2 bg-blue-500 text-white rounded"
-         >
-            Add Book
-         </button>
-      </form>
+         {errors.length > 0 && (
+            <div className="text-red-500 text-sm">
+               Please fill the following fields: {errors.join(", ")}
+            </div>
+         )}
+
+         <form onSubmit={handleSubmit} className="space-y-3">
+            {Object.keys(formData).map((key) => (
+               <div key={key}>
+                  <label
+                     htmlFor={key}
+                     className={`block text-sm font-medium mb-1 ${isError(key as keyof typeof formData)
+                           ? "text-red-500"
+                           : "text-gray-700"
+                        }`}
+                  >
+                     {key[0].toUpperCase() + key.slice(1)}
+                  </label>
+
+                  {key === "description" ? (
+                     <textarea
+                        id={key}
+                        name={key}
+                        value={formData[key as keyof typeof formData] || ""}
+                        onChange={handleChange}
+                        className={`w-full p-2 border rounded-lg ${isError(key as keyof typeof formData)
+                              ? "border-red-500"
+                              : "border-gray-300"
+                           }`}
+                        placeholder={`Enter ${key}`}
+                     />
+                  ) : (
+                     <input
+                        type={key === "price" ? "number" : "text"}
+                        id={key}
+                        name={key}
+                        value={formData[key as keyof typeof formData] || ""}
+                        onChange={handleChange}
+                        className={`w-full p-2 border rounded-lg ${isError(key as keyof typeof formData)
+                              ? "border-red-500"
+                              : "border-gray-300"
+                           }`}
+                        placeholder={`Enter ${key}`}
+                        step={key === "price" ? "0.01" : undefined}
+                     />
+                  )}
+
+                  {isError(key as keyof typeof formData) && (
+                     <p className="text-red-500 text-xs mt-1">
+                        {key[0].toUpperCase() + key.slice(1)} is required.
+                     </p>
+                  )}
+               </div>
+            ))}
+
+            <button
+               type="submit"
+               className="w-full bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300"
+            >
+               Add Book
+            </button>
+         </form>
+      </div>
    );
 };
 
-export default AddBookForm;
+export default BookForm;

@@ -22,41 +22,59 @@ export const GET = async () => {
 };
 
 // Add a new Book
-export async function POST(req: Request) {
+export const POST = async (req: Request) => {
 	try {
-		const data = await req.json(); // ✅ Ensure JSON parsing
-		console.log("Received Data:", data); // ✅ Add this for debugging
+		const body = await req.json();
+		const {
+			title,
+			description,
+			price,
+			isbn,
+			available,
+			authorName,
+			categoryName,
+			coverUrl,
+		} = body;
+
+		if (!title || !authorName || !categoryName) {
+			return NextResponse.json(
+				{ error: "Missing Required Fields" },
+				{ status: 400 }
+			);
+		}
+
+		const author = await prisma.author.upsert({
+			where: { name: authorName },
+			update: {},
+			create: { name: authorName },
+		});
+
+		const category = await prisma.category.upsert({
+			where: { name: categoryName },
+			update: {},
+			create: { name: categoryName },
+		});
 
 		const newBook = await prisma.book.create({
 			data: {
-				title: data.title,
-				description: data.description,
-				price: data.price,
-				isbn: data.isbn,
-				website: data.website,
-				author: {
-					connectOrCreate: {
-						where: { name: data.author.name },
-						create: { name: data.author.name },
-					},
-				},
-				category: {
-					connectOrCreate: {
-						where: { name: data.category.name },
-						create: { name: data.category.name },
-					},
-				},
-				coverImage: { create: { url: data.coverUrl } },
-				publishedAt: data.publishedAt,
+				title,
+				description,
+				price,
+				isbn,
+				available,
+				authorId: author.id,
+				categoryId: category.id,
+				coverImage: coverUrl ? { create: { url: coverUrl } } : undefined,
 			},
+			include: { author: true, category: true, coverImage: true },
 		});
 
 		return NextResponse.json(newBook, { status: 201 });
 	} catch (error) {
-		console.error("Error adding new book:", error);
+		console.log("Error adding new book", error);
 		return NextResponse.json(
-			{ error: "Failed to add book" },
+			{ error: "Failed to create a book" },
 			{ status: 500 }
 		);
 	}
-}
+};

@@ -24,34 +24,34 @@ export const fetchBooks = createAsyncThunk(
 				`${process.env.NEXT_PUBLIC_API_URL}/api/books`
 			);
 			return data;
-		} catch (error) {
-			if (axios.isAxiosError(error)) {
-				return rejectWithValue(
-					error.response?.data || "An unexpected error occurred"
-				);
-			} else {
-				return rejectWithValue("Unknown error occurred");
-			}
+		} catch (error: any) {
+			return rejectWithValue(error.response?.data);
 		}
 	}
 );
 
 // add books(optimistic ui)
 export const addBookAsync = createAsyncThunk(
-	"book/addBookAsync",
-	async (bookData: Partial<Book>, { rejectWithValue }) => {
+	"books/addBookAsync",
+	async (book: Book, { rejectWithValue }) => {
 		try {
-			const response = await axios.post("/api/books", bookData, {
-				headers: {
-					"Content-Type": "application/json", // Ensure JSON content type
-				},
-			});
-			return response.data;
-		} catch (error) {
-			if (axios.isAxiosError(error) && error.response) {
-				return rejectWithValue(error.response.data);
-			}
-			return rejectWithValue("Failed to add book");
+			const formattedBook = {
+				title: book.title,
+				description: "No description provided", // Placeholder since your form lacks this field
+				price: Number(book.price), // Convert price to number
+				isbn: book.isbn,
+				available: true, // Assuming all new books are available by default
+				authorName: book.author,
+				categoryName: "General", // Placeholder since your form lacks this field
+				coverUrl: book.coverImage || undefined, // Optional field
+			};
+			const { data } = await axios.post<Book>(
+				`${process.env.NEXT_PUBLIC_API_URL}/api/books`,
+				formattedBook
+			);
+			return data;
+		} catch (error: any) {
+			return rejectWithValue(error.response?.data || "Failed to add book");
 		}
 	}
 );
@@ -65,14 +65,10 @@ export const deleteBookAsync = createAsyncThunk(
 				`${process.env.NEXT_PUBLIC_API_URL}/api/books/${id}`
 			);
 			return data;
-		} catch (error) {
-			if (axios.isAxiosError(error)) {
-				return rejectWithValue(
-					error.response?.data || "An unexpected error occurred"
-				);
-			} else {
-				return rejectWithValue("Unknown error occurred");
-			}
+		} catch (error: any) {
+			return rejectWithValue(
+				error.response?.data || "Failed to delete book"
+			);
 		}
 	}
 );
@@ -86,14 +82,10 @@ export const updateBookAsync = createAsyncThunk(
 				`${process.env.NEXT_PUBLIC_API_URL}/api/books/${book.id}`
 			);
 			return data;
-		} catch (error) {
-			if (axios.isAxiosError(error)) {
-				return rejectWithValue(
-					error.response?.data || "An unexpected error occurred"
-				);
-			} else {
-				return rejectWithValue("Unknown error occurred");
-			}
+		} catch (error: any) {
+			return rejectWithValue(
+				error.response?.data || "failed to update book"
+			);
 		}
 	}
 );
@@ -142,21 +134,7 @@ const bookSlice = createSlice({
 
 			// Add books
 			.addCase(addBookAsync.pending, (state, action) => {
-				const tempBook: Book = {
-					...action.meta.arg,
-					id: crypto.randomUUID(),
-					title: action.meta.arg.title || "",
-					description: action.meta.arg.description || "",
-					price: action.meta.arg.price || 0,
-					isbn: action.meta.arg.isbn || "",
-					available: action.meta.arg.available || false,
-					website: action.meta.arg.website || "",
-					publishedAt: action.meta.arg.publishedAt || "",
-					author: action.meta.arg.author || { id: "", name: "" },
-					category: action.meta.arg.category || { id: "", name: "" },
-					coverImage: action.meta.arg.coverImage || { id: "", url: "" }
-				};
-				state.books.unshift(tempBook);
+				state.books.unshift(action.meta.arg);
 			})
 			.addCase(addBookAsync.rejected, (state, action) => {
 				state.books = state.books.filter(
