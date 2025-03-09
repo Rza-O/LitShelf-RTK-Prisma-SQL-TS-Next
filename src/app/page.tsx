@@ -1,4 +1,5 @@
 import BookForm from "@/components/AddBookForm";
+import BookList from "@/components/BooksList";
 import axios from "axios";
 
 export default async function Home() {
@@ -18,6 +19,7 @@ export default async function Home() {
       <h2>LitShelf Your Book Management Services</h2>
       <div className="flex gap-8 items-center justify-center min-h-screen p-8 pb-20 font-[family-name:var(--font-geist-sans)]">
         <BookForm />
+        <BookList />
       </div>
     </div>
   );

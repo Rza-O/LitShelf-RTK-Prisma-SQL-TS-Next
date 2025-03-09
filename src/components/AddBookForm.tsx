@@ -10,15 +10,22 @@ const BookForm = () => {
    const dispatch = useDispatch<AppDispatch>();
 
    // Form State
-   const [formData, setFormData] = useState<Omit<Book, "id"> & {
+   const [formData, setFormData] = useState<{
+      title: string;
+      authorName: string;
+      authorBio: string;
+      isbn: string;
+      price: number;
+      coverImageUrl: string;
       description: string;
       categoryName: string;
    }>({
       title: "",
-      author: "",
+      authorName: "",
+      authorBio: "",
       isbn: "",
       price: 0,
-      coverImage: "",
+      coverImageUrl: "",
       description: "",
       categoryName: "",
    });
@@ -26,7 +33,9 @@ const BookForm = () => {
    const [errors, setErrors] = useState<string[]>([]);
 
    // Handle Input Change
-   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+   const handleChange = (
+      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+   ) => {
       const { name, value } = e.target;
       setFormData((prevData) => ({
          ...prevData,
@@ -40,7 +49,7 @@ const BookForm = () => {
 
       // Basic Validation
       const missingFields = Object.entries(formData)
-         .filter(([key, value]) => key !== "coverImage" && !value)
+         .filter(([key, value]) => !value)
          .map(([key]) => key);
 
       if (missingFields.length) {
@@ -48,20 +57,47 @@ const BookForm = () => {
          return;
       }
 
+      // Construct Correct Book Object
+      const newBook: Book = {
+         id: Date.now().toString(),
+         title: formData.title,
+         description: formData.description,
+         price: formData.price,
+         isbn: formData.isbn,
+         available: true,
+         website: null,
+         publishedAt: new Date().toISOString(),
+         author: {
+            id: `author-${Date.now()}`,
+            name: formData.authorName,
+            bio: formData.authorBio,
+         },
+         category: {
+            id: `category-${Date.now()}`,
+            name: formData.categoryName,
+         },
+         coverImage: {
+            id: `cover-${Date.now()}`,
+            url: formData.coverImageUrl,
+            bookId: Date.now().toString(),
+         },
+      };
+
       // Dispatch Async Action
-      const newBook: Book = { ...formData, id: Date.now().toString() };
       dispatch(addBookAsync(newBook));
 
       // Clear Form
       setFormData({
          title: "",
-         author: "",
+         authorName: "",
+         authorBio: "",
          isbn: "",
          price: 0,
-         coverImage: "",
+         coverImageUrl: "",
          description: "",
          categoryName: "",
       });
+
       setErrors([]);
    };
 

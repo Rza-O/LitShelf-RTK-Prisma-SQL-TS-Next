@@ -53,7 +53,7 @@ model Image {
   id     String @id @default(uuid())
   url    String
   bookId String @unique
-  book   Book   @relation(fields: [bookId], references: [id])
+  book   Book   @relation(fields: [bookId], references: [id], onDelete: Cascade)
 }
 
 // Review (One-to-Many: A book has multiple reviews)

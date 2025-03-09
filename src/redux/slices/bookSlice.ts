@@ -30,6 +30,21 @@ export const fetchBooks = createAsyncThunk(
 	}
 );
 
+// fetch by book Id
+export const fetchBookById = createAsyncThunk(
+	"books/fetchBookById",
+	async (id: string, { rejectWithValue }) => {
+		try {
+			const { data } = await axios.get<Book>(
+				`${process.env.NEXT_PUBLIC_API_URL}/api/books/${id}`
+			);
+			return data;
+		} catch (error: any) {
+			return rejectWithValue(error.response?.data || "Failed to fetch book");
+		}
+	}
+);
+
 // add books(optimistic ui)
 export const addBookAsync = createAsyncThunk(
 	"books/addBookAsync",
@@ -37,13 +52,13 @@ export const addBookAsync = createAsyncThunk(
 		try {
 			const formattedBook = {
 				title: book.title,
-				description: "No description provided", // Placeholder since your form lacks this field
-				price: Number(book.price), // Convert price to number
+				description: "No description provided",
+				price: Number(book.price),
 				isbn: book.isbn,
-				available: true, // Assuming all new books are available by default
+				available: true,
 				authorName: book.author,
-				categoryName: "General", // Placeholder since your form lacks this field
-				coverUrl: book.coverImage || undefined, // Optional field
+				categoryName: "General",
+				coverUrl: book.coverImage || undefined,
 			};
 			const { data } = await axios.post<Book>(
 				`${process.env.NEXT_PUBLIC_API_URL}/api/books`,
@@ -74,21 +89,39 @@ export const deleteBookAsync = createAsyncThunk(
 );
 
 // update book optimistically
-export const updateBookAsync = createAsyncThunk(
-	"books/updateBookAsync",
-	async (book: Book, { rejectWithValue }) => {
-		try {
-			const { data } = await axios.put<Book>(
-				`${process.env.NEXT_PUBLIC_API_URL}/api/books/${book.id}`
-			);
-			return data;
-		} catch (error: any) {
-			return rejectWithValue(
-				error.response?.data || "failed to update book"
-			);
-		}
+export const updateBookAsync = createAsyncThunk<
+	Book,
+	Book,
+	{ rejectValue: string }
+>("books/updateBookAsync", async (book, { rejectWithValue }) => {
+	try {
+		const formattedBook = {
+			title: book.title,
+			description: book.description || "No description provided",
+			price: Number(book.price),
+			isbn: book.isbn,
+			available: book.available,
+			authorName: book.author?.name,
+			categoryName: book.category?.name,
+			coverUrl: book.coverImage?.url,
+		};
+
+		const { data } = await axios.put<Book>(
+			`${process.env.NEXT_PUBLIC_API_URL}/api/books/${book.id}`,
+			formattedBook,
+			{ headers: { "Content-Type": "application/json" } }
+		);
+
+		return data;
+	} catch (error: any) {
+		const errorMessage =
+			typeof error.response?.data === "object"
+				? JSON.stringify(error.response.data)
+				: error.response?.data || "Failed to update book";
+
+		return rejectWithValue(errorMessage);
 	}
-);
+});
 
 // Redux slice with synchronous and Async reducers
 
@@ -128,6 +161,26 @@ const bookSlice = createSlice({
 				state.books = action.payload;
 			})
 			.addCase(fetchBooks.rejected, (state, action) => {
+				state.loading = false;
+				state.error = action.payload as string;
+			})
+			// fetch single book by id
+			.addCase(fetchBookById.pending, (state) => {
+				state.loading = true;
+				state.error = null;
+			})
+			.addCase(fetchBookById.fulfilled, (state, action) => {
+				state.loading = false;
+				const existingBookIndex = state.books.findIndex(
+					(book) => book.id === action.payload.id
+				);
+				if (existingBookIndex !== -1) {
+					state.books[existingBookIndex] = action.payload;
+				} else {
+					state.books.push(action.payload);
+				}
+			})
+			.addCase(fetchBookById.rejected, (state, action) => {
 				state.loading = false;
 				state.error = action.payload as string;
 			})

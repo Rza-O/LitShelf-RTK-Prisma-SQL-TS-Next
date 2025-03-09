@@ -31,7 +31,7 @@ export const GET = async (
 	}
 };
 
-// updating a single book
+// Updating a single book
 export const PUT = async (
 	req: Request,
 	{ params }: { params: { id: string } }
@@ -40,14 +40,19 @@ export const PUT = async (
 		const body = await req.json();
 		const {
 			title,
-			description,
+			description = "No description provided",
 			price,
 			isbn,
-			available,
-			authorName,
-			categoryName,
+			available = true,
+			authorName: authorObj,
+			categoryName: categoryObj,
 			coverUrl,
 		} = body;
+
+		const authorName =
+			typeof authorObj === "object" ? authorObj.name : authorObj;
+		const categoryName =
+			typeof categoryObj === "object" ? categoryObj.name : categoryObj;
 
 		if (!title || !authorName || !categoryName) {
 			return NextResponse.json(
@@ -56,7 +61,7 @@ export const PUT = async (
 			);
 		}
 
-		// Looking for if the changed author exist or should create a new one
+		// Finding or creating the author
 		const author = await prisma.author.upsert({
 			where: { name: authorName },
 			update: {},
@@ -70,8 +75,8 @@ export const PUT = async (
 			create: { name: categoryName },
 		});
 
-		// now updating book
-		const updateBook = await prisma.book.update({
+		// Updating the book
+		const updatedBook = await prisma.book.update({
 			where: { id: params.id },
 			data: {
 				title,
@@ -84,8 +89,8 @@ export const PUT = async (
 				coverImage: coverUrl
 					? {
 							upsert: {
-								update: { url: coverUrl },
-								create: { url: coverUrl },
+								update: { url: coverUrl }, // ✅ `url` is now correctly a string
+								create: { url: coverUrl }, // ✅ Same correction here
 							},
 					  }
 					: undefined,
@@ -93,15 +98,20 @@ export const PUT = async (
 			include: { author: true, category: true, coverImage: true },
 		});
 
-		return NextResponse.json(updateBook, { status: 200 });
-	} catch (error) {
-		console.log(error, "error Updating book");
+		return NextResponse.json(updatedBook, { status: 200 });
+	} catch (error: any) {
+		console.error("Error updating book:", error);
 		return NextResponse.json(
-			{ error: "Failed to update a book" },
+			{
+				error: "Failed to update the book",
+				details: error.message || "Unknown error",
+			},
 			{ status: 500 }
 		);
 	}
 };
+
+
 
 // deleting a single book
 export const DELETE = async (
