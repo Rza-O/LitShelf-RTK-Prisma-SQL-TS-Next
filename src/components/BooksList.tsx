@@ -6,27 +6,36 @@ import { AppDispatch, RootState } from "@/redux/store";
 import { fetchBooks } from "@/redux/slices/bookSlice";
 import BookCard from "./BookCard";
 import BooKCardSkeleton from "./BooKCardSkeleton";
+import { useGetBooksQuery } from "@/redux/services/bookApi";
 
 const BookList = () => {
-   const dispatch = useDispatch<AppDispatch>();
-   const { books, loading, error } = useSelector(
-      (state: RootState) => state.book
-   );
+   // const dispatch = useDispatch<AppDispatch>();
+   // const { books, loading, error } = useSelector(
+   //    (state: RootState) => state.book
+   // );
 
-   useEffect(() => {
-      dispatch(fetchBooks());
-   }, [dispatch]);
+   // useEffect(() => {
+   //    dispatch(fetchBooks());
+   // }, [dispatch]);
 
-   if (loading) <BooKCardSkeleton />;
-   if (error) return <p className="text-red-500">{error}</p>;
+
+   const { data: books, error, isLoading } = useGetBooksQuery();
+
+
+
+   if (isLoading) <BooKCardSkeleton />;
+   if (error) {
+      const errorMessage = 'status' in error ? error.status : error.message;
+      return <p className="text-red-500">{errorMessage}</p>;
+   }
 
    return (
       <div className="container mx-auto my-8">
-         {loading ? (
+         {isLoading ? (
             <BooKCardSkeleton />
          ) : (
             <div className="grid grid-cols-3 gap-4">
-               {books.map((book) => (
+               {books && books.map((book) => (
                   <BookCard key={book.id} book={book} />
                ))}
             </div>
