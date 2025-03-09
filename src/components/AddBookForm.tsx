@@ -105,7 +105,7 @@ const BookForm = () => {
    const isError = (field: keyof typeof formData) => errors.includes(field);
 
    return (
-      <div className="max-w-md p-6 bg-white rounded-2xl shadow-md space-y-4">
+      <div className="w-[500px] p-6 bg-white rounded-2xl shadow-md space-y-4">
          <h2 className="text-xl font-bold text-gray-800">Add a New Book</h2>
 
          {errors.length > 0 && (

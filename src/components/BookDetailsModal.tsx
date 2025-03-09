@@ -23,17 +23,30 @@ const BookDetailsModal = ({ book, onClose }: Props) => {
       setIsEditable((prev) => !prev);
    };
 
-   // Handle input changes
+
+   // Type guard to check if a value is an object
+   const isObject = (value: unknown): value is Record<string, unknown> =>
+      typeof value === "object" && value !== null;
+
    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const { name, value } = e.target;
 
-      // Handle nested fields properly
       if (name.includes(".")) {
          const [parent, child] = name.split(".");
-         setFormData((prev) => ({
-            ...prev,
-            [parent]: { ...prev[parent as keyof Book], [child]: value },
-         }));
+
+         setFormData((prev) => {
+            const parentValue = prev[parent as keyof Book];
+
+            // Ensure only objects are spread
+            if (isObject(parentValue)) {
+               return {
+                  ...prev,
+                  [parent]: { ...parentValue, [child]: value },
+               };
+            }
+
+            return prev;
+         });
       } else {
          setFormData({ ...formData, [name]: value });
       }
